@@ -7,7 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.project_venv/Lib" />
       <excludeFolder url="file://$MODULE_DIR$/.project_venv/Scripts" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.13" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.13 (6305bellerse)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
