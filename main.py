@@ -1,4 +1,5 @@
 import json
+import math
 import os.path
 from random import choice
 import csv
@@ -6,6 +7,16 @@ import requests
 import numpy as np
 from PIL import Image
 import cv2
+
+def create_gauss_matrix(n, sigma=1):
+    matrix = np.zeros((n, n))
+    center = n // 2
+    for y in range(n):
+        for x in range(n):
+            offset_x = abs(x - center)
+            offset_y = abs(y - center)
+            matrix[y][x] = math.e ** -(((offset_x ** 2) + (offset_y ** 2)) / (2*sigma**2))
+    return matrix / np.sum(matrix)
 
 def to_halftone_f_sh(array):
     # Алгоритм дизеринга Флойда-Штайнберга
@@ -25,6 +36,23 @@ def to_halftone_f_sh(array):
             gray_array[y+1, x+1] += error * 1 / 16
 
     return gray_array.astype(np.uint8)
+
+def convolution(array, mask):
+    result = np.zeros_like(array).astype(np.float32)
+    mask = np.array(mask).astype(np.float32)
+    h, w = len(array), len(array[0])
+    mask_sum = np.sum(mask)
+
+    indent = len(mask[0]) // 2
+    h, w = len(array), len(array[0])
+
+    for y in range(indent, h-indent):
+        for x in range(indent, w-indent):
+            field = array[y-indent:y+indent+1,x-indent:x+indent+1]
+            field_on_mask = field * mask[:, :, np.newaxis]
+            result[y][x] = np.sum(field_on_mask, axis=(0, 1)) / mask_sum
+
+    return np.clip(result, 0, 255).astype(np.uint8)
 
 def to_halftone(array):
     gray_array = (np.array(0.299 * array[:, :, 0] + 0.587 * array[:, :, 1] + 0.114 * array[:, :, 2]))
@@ -97,14 +125,19 @@ metadata = download_metadata_with_imageurl()
 image = download_image(metadata["primaryImage"])
 image_path, metadata_path = write_data(directory, metadata, image)
 
-# Halftone
+# приведение цветного изображения к полутоновому
 image_array = np.array(Image.open(image_path).convert("RGB"))
 halftone_f_sh = to_halftone_f_sh(image_array)
 write_np_image(directory, 'halftone_f_sh', halftone_f_sh)
-
-halftone = to_halftone(image_array)
-write_np_image(directory, 'halftone', halftone)
+halftone_image = to_halftone(image_array)
+write_np_image(directory, 'halftone', halftone_image)
 
 cv2_image = cv2.imread(image_path)
 cv2_halftone = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2GRAY)
 cv2.imwrite(os.path.join(directory, 'cv2_halftone.jpg'), cv2_halftone)
+
+# свёртка и использованием двумерной маски
+
+mask = create_gauss_matrix(67, 11)
+convolution_image = convolution(image_array, mask)
+write_np_image(directory, 'gauss', convolution_image)
