@@ -1,5 +1,5 @@
 import math
-from typing import Dict, Any
+from typing import Dict
 import numpy as np
 from numpy.typing import NDArray
 
