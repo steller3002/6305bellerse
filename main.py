@@ -37,9 +37,12 @@ write_np_image(save_directory, 'gauss', gauss_image)
 cv2_gauss = cv2.GaussianBlur(cv2_image, (13, 13), 0)
 cv2.imwrite(os.path.join(save_directory, 'cv2_gauss.jpg'), cv2_gauss)
 
-# фильтр Собеля и Кенни
+# фильтр Собеля
 sobel_image = sobel(image_array)
 write_np_image(save_directory, 'sobel', sobel_image)
 
-cv2_canny = cv2.Canny(cv2_halftone, 100, 200)
-cv2.imwrite(os.path.join(save_directory, 'cv2_Canny.jpg'), cv2_canny)
+cv_sobel_x = cv2.Sobel(cv2_halftone, cv2.CV_64F, 1, 0, ksize=3)
+cv_sobel_y = cv2.Sobel(cv2_halftone, cv2.CV_64F, 0, 1, ksize=3)
+sobel_combined = cv2.magnitude(cv_sobel_x, cv_sobel_y)
+cv2_sobel = np.uint8(np.absolute(sobel_combined))
+cv2.imwrite(os.path.join(save_directory, 'cv2_Sobel.jpg'), cv2_sobel)
