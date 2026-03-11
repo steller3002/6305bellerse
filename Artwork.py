@@ -62,12 +62,14 @@ class Artwork:
 
         indent = len(mask[0]) // 2
         h, w = len(self.nparray), len(self.nparray[0])
+        if mask.ndim == 3:
+            mask = mask[:, :, np.newaxis]
 
         for y in range(indent, h - indent):
             for x in range(indent, w - indent):
                 field = self.nparray[y - indent:y + indent + 1, x - indent:x + indent + 1]
-                field_on_mask = field * mask[:, :, np.newaxis]
-                result[y][x] = np.sum(field_on_mask, axis=(0, 1)) / mask_sum
+                field_on_mask = field * mask
+                result[y][x] = np.sum(field_on_mask, axis=(0, 1))
 
         return np.clip(result, 0, 255).astype(np.uint8)
 
