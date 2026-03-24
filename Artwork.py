@@ -4,23 +4,30 @@ import numpy as np
 from numpy.typing import NDArray
 
 class Artwork:
+    __slots__ = ('__nparray', '__metadata')
+
     def __init__(self, nparray: NDArray[np.uint8], metadata: Dict[str, str]):
-        self.nparray = nparray
-        self.metadata = metadata
+        self.__nparray = nparray
+        self.__metadata = metadata
+
+    @property
+    def image(self) -> NDArray[np.uint8]: return self.__nparray
+    @property
+    def metadata(self) -> Dict[str, str]: return self.__metadata
 
     def to_halftone(self) -> NDArray[np.uint8]:
         gray_array = np.array(
-            0.299 * self.nparray[:, :, 0]
-           + 0.587 * self.nparray[:, :, 1]
-           + 0.114 * self.nparray[:, :, 2])
+            0.299 * self.__nparray[:, :, 0]
+           + 0.587 * self.__nparray[:, :, 1]
+           + 0.114 * self.__nparray[:, :, 2])
         return gray_array.astype(np.uint8)
 
     def to_halftone_f_sh(self) -> NDArray[np.uint8]:
         # Алгоритм дизеринга Флойда-Штайнберга
         gray_array = np.array(
-            0.299 * self.nparray[:, :, 0]
-           + 0.587 * self.nparray[:, :, 1]
-           + 0.114 * self.nparray[:, :, 2]).astype(np.float32)
+            0.299 * self.__nparray[:, :, 0]
+           + 0.587 * self.__nparray[:, :, 1]
+           + 0.114 * self.__nparray[:, :, 2]).astype(np.float32)
 
         w = len(gray_array[0])
         h = len(gray_array)
@@ -57,38 +64,36 @@ class Artwork:
         return np.clip(result, 0, 255).astype(np.uint8)
 
     def convolution(self, mask: NDArray[np.float32]) -> NDArray[np.uint8]:
-        result = np.zeros_like(self.nparray).astype(np.float32)
-        mask_sum = np.sum(mask)
+        h, w, c = self.__nparray.shape
+        result = np.zeros_like(self.__nparray, dtype=np.float32)
 
-        indent = len(mask[0]) // 2
-        h, w = len(self.nparray), len(self.nparray[0])
-        if mask.ndim == 3:
-            mask = mask[:, :, np.newaxis]
+        indent = len(mask) // 2
+        refined_mask = mask[:, :, np.newaxis]
 
         for y in range(indent, h - indent):
             for x in range(indent, w - indent):
-                field = self.nparray[y - indent:y + indent + 1, x - indent:x + indent + 1]
-                field_on_mask = field * mask
-                result[y][x] = np.sum(field_on_mask, axis=(0, 1))
+                field = self.__nparray[y - indent: y + indent + 1, x - indent: x + indent + 1]
+                pixel_sum = np.sum(field * refined_mask, axis=(0, 1))
+                result[y, x] = pixel_sum
 
         return np.clip(result, 0, 255).astype(np.uint8)
 
     def __add__(self, other: 'Artwork') -> 'Artwork':
-        h_self, w_self = len(self.nparray), len(self.nparray[0])
-        h_other, w_other = len(other.nparray), len(other.nparray[0])
-        nparray_other = other.nparray
+        h_self, w_self = len(self.__nparray), len(self.__nparray[0])
+        h_other, w_other = len(other.__nparray), len(other.__nparray[0])
+        nparray_other = other.__nparray
 
         if h_self != h_other or w_self != w_other:
-            temp = np.zeros_like(self.nparray).astype(np.float32)
+            temp = np.zeros_like(self.__nparray).astype(np.float32)
             h_min, w_min = min(h_self, h_other), min(w_self, w_other)
             temp[:h_min, :w_min] = nparray_other[:h_min, :w_min]
             nparray_other = temp
 
-        result = (self.nparray.astype(np.uint16) + nparray_other.astype(np.uint16)) // 2
-        return Artwork(result, self.metadata.copy())
+        result = (self.__nparray.astype(np.uint16) + nparray_other.astype(np.uint16)) // 2
+        return Artwork(result, self.__metadata.copy())
 
     def __str__(self) -> str:
-        return str(self.metadata.copy())
+        return str(self.__metadata.copy())
 
     @staticmethod
     def create_gauss_matrix(n) -> NDArray[np.float32]:
