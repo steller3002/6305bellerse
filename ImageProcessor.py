@@ -17,7 +17,6 @@ class ImageProcessor:
         self.__current_artwork = None
 
     @property
-    @property
     def artwork(self) -> Artwork | None:
         return self.__current_artwork
 

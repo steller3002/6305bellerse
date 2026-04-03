@@ -16,6 +16,9 @@ def main():
     processor.gauss_blur(size=3, save_name="blur")
     processor.dithering()
 
+    art1 = processor.download_new_artwork()
+    art2 = processor.download_new_artwork()
+    storage.save_numpy_image((art1 + art2).image, 'plus')
 
 if __name__ == "__main__":
     main()

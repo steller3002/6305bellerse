@@ -1,5 +1,7 @@
 import math
 from typing import Dict
+
+import cv2
 import numpy as np
 from numpy.typing import NDArray
 
@@ -79,17 +81,17 @@ class Artwork:
         return np.clip(result, 0, 255).astype(np.uint8)
 
     def __add__(self, other: 'Artwork') -> 'Artwork':
-        h_self, w_self = len(self.__nparray), len(self.__nparray[0])
-        h_other, w_other = len(other.__nparray), len(other.__nparray[0])
-        nparray_other = other.__nparray
+        target_h, target_w = self.__nparray.shape[:2]
+        resized_other = cv2.resize(
+            other.image,
+            (target_w, target_h),
+            interpolation=cv2.INTER_AREA
+        )
 
-        if h_self != h_other or w_self != w_other:
-            temp = np.zeros_like(self.__nparray).astype(np.float32)
-            h_min, w_min = min(h_self, h_other), min(w_self, w_other)
-            temp[:h_min, :w_min] = nparray_other[:h_min, :w_min]
-            nparray_other = temp
+        result = (
+                (self.__nparray.astype(np.uint16) + resized_other.astype(np.uint16)) // 2
+        ).astype(np.uint8)
 
-        result = (self.__nparray.astype(np.uint16) + nparray_other.astype(np.uint16)) // 2
         return Artwork(result, self.__metadata.copy())
 
     def __str__(self) -> str:
