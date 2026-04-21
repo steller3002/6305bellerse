@@ -2,9 +2,9 @@ import csv
 from dataclasses import dataclass
 import json
 import os
-
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
+import pandas as pd
 
 from Artwork import Artwork
 from PIL import Image
@@ -31,6 +31,7 @@ class DataProvider:
 
     def get_painting_ids(self) -> list[str]:
         try:
+            data = pd.read_csv(self.csv_path, low_memory=False)
             painting_ids = []
             with open(self.__csv_path, encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
