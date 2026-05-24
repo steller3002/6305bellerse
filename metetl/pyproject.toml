@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metetl_beller-010302D-6305"
+version = "0.2.2"
+description = "Met Museum ETL"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "aiohttp",
+    "aiofiles",
+    "numpy",
+    "pandas",
+    "Pillow",
+    "opencv-python",
+    "matplotlib"
+]
+
+[project.scripts]
+metetl = "metetl.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
